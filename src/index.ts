@@ -4,6 +4,8 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import { Config } from "./config";
 import { Pool } from "pg";
+import { HttpError } from "http-errors";
+import { Request, Response, NextFunction } from "express";
 
 const app = express();
 const port = Config.PORT || 4000;
@@ -12,6 +14,20 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(todoRoutes);
+app.use(
+  (err: HttpError, _req: Request, res: Response, _next: NextFunction): void => {
+    res.status(err.status || 500);
+    const errMessage =
+      err.message ??
+      (err.status === 404 ? "Duty not found" : "Internal Server Error");
+    res.json({
+      error: {
+        status: err.status || 500,
+        message: errMessage,
+      },
+    });
+  }
+);
 
 const pool = new Pool({
   connectionString: Config.DATABASE_URL,
