@@ -44,7 +44,7 @@ const createDuty = async (req: Request, res: Response, next: NextFunction) => {
   }
   try {
     const results = await pool.query<Duty>(
-      "INSERT INTO duties (name) VALUES ($1) RETURNING id",
+      "INSERT INTO duties (name) VALUES ($1) RETURNING *",
       [name]
     );
     res.status(201).json(results.rows[0]);
@@ -79,11 +79,11 @@ const updateDuty = async (req: Request, res: Response, next: NextFunction) => {
     return next(createError(500));
   }
   try {
-    await pool.query<Duty>("UPDATE duties SET name = $1 WHERE id = $2", [
+    const results = await pool.query<Duty>("UPDATE duties SET name = $1 WHERE id = $2 RETURNING *", [
       name,
       idNum,
     ]);
-    res.status(200).send(`Duty updated with ID: ${idNum}`);
+    res.status(200).json(results.rows[0]);
   } catch (err) {
     return next(createError(500));
   }
