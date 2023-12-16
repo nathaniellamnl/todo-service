@@ -1,6 +1,7 @@
 import request from "supertest";
 import { app } from "../index";
-import { Pool } from "pg";
+import { Pool, QueryArrayResult } from "pg";
+import { Duty } from "../types";
 
 jest.mock("pg", () => {
   const mockPool = {
@@ -14,9 +15,6 @@ describe("Get duties", () => {
   let pool: Pool;
   beforeEach(() => {
     pool = new Pool();
-  });
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   it("should return a list of duties", async () => {
@@ -37,15 +35,18 @@ describe("Get duties", () => {
       ],
       rowCount: 2,
     };
-    //@ts-ignore
-    pool.query.mockResolvedValueOnce(mockData);
+    pool.query = jest.fn(
+      () =>
+        new Promise<QueryArrayResult<any>>((resolve, _) => {
+          resolve({ ...mockData, command: "", oid: 0, fields: [] });
+        })
+    );
     const res = await request(app).get("/api/duties").expect(200);
     expect(res.body).toEqual(mockData.rows);
   });
 
-  it("should return 500", async () => {
-    //@ts-ignore
-    pool.query.mockImplementation(() => {
+  it("should return 500 when database throws an error", async () => {
+    pool.query = jest.fn(() => {
       throw new Error("");
     });
     const res = await request(app).get("/api/duties").expect(500);
