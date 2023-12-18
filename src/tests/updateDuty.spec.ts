@@ -28,6 +28,12 @@ describe("Update duty", () => {
   });
 
   it("should return 400 when name is missing", async () => {
+    pool.query = jest.fn(
+      () =>
+        new Promise<QueryArrayResult<any>>((resolve, _) => {
+          resolve({ ...mockData, command: "", oid: 0, fields: [] });
+        })
+    );
     const res = await request(app).put("/api/duties/1").expect(400);
     expect(res.body.error.message).toEqual("Name is required");
   });

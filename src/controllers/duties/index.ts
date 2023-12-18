@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import pool from "../../database";
 import { Duty } from "../../types";
 import createError from "http-errors";
-import { StringToNum } from "../../utils";
 
 const getDuties = async (_: Request, res: Response, next: NextFunction) => {
   try {
@@ -16,17 +15,11 @@ const getDuties = async (_: Request, res: Response, next: NextFunction) => {
 };
 
 const getDutyById = async (req: Request, res: Response, next: NextFunction) => {
-  const id = req.params.id;
-  let idNum: number;
-  try {
-    idNum = StringToNum(id);
-  } catch (err) {
-    return next(createError(404));
-  }
+  const id = req.numericId;
   try {
     const results = await pool.query<Duty>(
       "SELECT * FROM duties WHERE id = $1",
-      [idNum]
+      [id]
     );
     if (results.rows.length === 0) {
       return next(createError(404));
@@ -54,35 +47,16 @@ const createDuty = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const updateDuty = async (req: Request, res: Response, next: NextFunction) => {
-  const id = req.params.id;
+  const id = req.numericId;
   const { name } = req.body;
   if (!name) {
     return next(createError(400, "Name is required"));
   }
-
-  let idNum: number;
-  try {
-    idNum = StringToNum(id);
-  } catch (err) {
-    return next(createError(404));
-  }
-  // throw 404 if id does not exist
   try {
     const results = await pool.query<Duty>(
-      `SELECT * FROM duties WHERE id = $1`,
-      [idNum]
+      "UPDATE duties SET name = $1 WHERE id = $2 RETURNING *",
+      [name, id]
     );
-    if (results.rows.length === 0) {
-      return next(createError(404));
-    }
-  } catch (err) {
-    return next(createError(500));
-  }
-  try {
-    const results = await pool.query<Duty>("UPDATE duties SET name = $1 WHERE id = $2 RETURNING *", [
-      name,
-      idNum,
-    ]);
     res.status(200).json(results.rows[0]);
   } catch (err) {
     return next(createError(500));
@@ -90,35 +64,13 @@ const updateDuty = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const deleteDuty = async (req: Request, res: Response, next: NextFunction) => {
-  const id = req.params.id;
-  let idNum: number;
+  const id = req.numericId;
   try {
-    idNum = StringToNum(id);
-  } catch (err) {
-    return next(createError(404));
-  }
-  // throw 404 if id does not exist
-  try {
-    const results = await pool.query<Duty>(
-      `SELECT * FROM duties WHERE id = $1`,
-      [idNum]
-    );
-    if (results.rows.length === 0) {
-      return next(createError(404));
-    }
-  } catch (err) {
-    return next(createError(500));
-  }
-  try {
-    await pool.query<Duty>("DELETE FROM duties WHERE id = $1`", [
-      idNum,
-    ]);
+    await pool.query<Duty>(`DELETE FROM duties WHERE id = $1`, [id]);
     res.status(200).send(`Duty deleted with ID: ${id}`);
-
   } catch (err) {
     return next(createError(500));
   }
-
 };
 
 export { getDuties, getDutyById, createDuty, updateDuty, deleteDuty };
