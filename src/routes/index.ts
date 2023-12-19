@@ -54,6 +54,7 @@ const validateRequestData = async (
   if (!name) {
     return next(createError(400, "Name is required"));
   }
+  next();
 };
 
 router.post("/duties", validateRequestData, createDuty);
