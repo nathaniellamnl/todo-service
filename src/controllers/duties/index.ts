@@ -32,9 +32,6 @@ const getDutyById = async (req: Request, res: Response, next: NextFunction) => {
 
 const createDuty = async (req: Request, res: Response, next: NextFunction) => {
   const { name } = req.body;
-  if (!name) {
-    return next(createError(400, "Name is required"));
-  }
   try {
     const results = await pool.query<Duty>(
       "INSERT INTO duties (name) VALUES ($1) RETURNING *",
@@ -49,9 +46,6 @@ const createDuty = async (req: Request, res: Response, next: NextFunction) => {
 const updateDuty = async (req: Request, res: Response, next: NextFunction) => {
   const id = req.numericId;
   const { name } = req.body;
-  if (!name) {
-    return next(createError(400, "Name is required"));
-  }
   try {
     const results = await pool.query<Duty>(
       "UPDATE duties SET name = $1 WHERE id = $2 RETURNING *",

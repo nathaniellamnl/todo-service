@@ -28,11 +28,7 @@ const convertIdToNumber = (req: Request, _: Response, next: NextFunction) => {
   next();
 };
 
-const checkIfIdExists = async (
-  req: Request,
-  _: Response,
-  next: NextFunction
-) => {
+const validateId = async (req: Request, _: Response, next: NextFunction) => {
   const id = req.numericId;
 
   try {
@@ -49,11 +45,22 @@ const checkIfIdExists = async (
   next();
 };
 
-router.post("/duties", createDuty);
+const validateRequestData = async (
+  req: Request,
+  _: Response,
+  next: NextFunction
+) => {
+  const { name } = req.body;
+  if (!name) {
+    return next(createError(400, "Name is required"));
+  }
+};
+
+router.post("/duties", validateRequestData, createDuty);
 router.get("/duties", getDuties);
 router.use("/duties/:id", convertIdToNumber);
 router.get("/duties/:id", getDutyById);
-router.put("/duties/:id", checkIfIdExists, updateDuty);
-router.delete("/duties/:id", checkIfIdExists, deleteDuty);
+router.put("/duties/:id", validateId, validateRequestData, updateDuty);
+router.delete("/duties/:id", validateId, deleteDuty);
 
 export default router;
