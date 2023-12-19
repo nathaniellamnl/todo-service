@@ -8,7 +8,7 @@ import { HttpError } from "http-errors";
 import { Request, Response, NextFunction } from "express";
 
 export const app = express();
-const port = Config.PORT || 4000;
+const port = Config.PORT || 5050;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
